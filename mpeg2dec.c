@@ -2000,6 +2000,7 @@ extern void __wgetmainargs (int *, wchar_t ***, wchar_t ***, int, _startupinfo
                             *);
 
 
+#ifndef AS_LIBRARY
 int main (int argc, char ** argv)
 {
     AVPacket pkt1, *packet = &pkt1;
@@ -2443,3 +2444,4 @@ nextpacket:
     exit (!result);
 #endif
 }
+#endif

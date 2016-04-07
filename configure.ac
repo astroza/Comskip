@@ -1,5 +1,7 @@
 AC_INIT([Comskip], [0.81.089], [https://github.com/erikkaashoek/Comskip/issues])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AM_PROG_AR
+LT_INIT
 
 : ${CFLAGS=""}
 AC_PROG_CC
