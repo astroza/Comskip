@@ -749,7 +749,7 @@ void audio_packet_process(VideoState *is, AVPacket *pkt)
     }
 }
 
-static double print_fps (int final)
+double print_fps (int final)
 {
     static uint32_t frame_counter = 0;
     static struct timeval tv_beg, tv_start;

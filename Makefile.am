@@ -39,6 +39,7 @@ libcomskip_la_LIBADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(sdl_LIBS)
 libcomskip_la_CFLAGS = $(DEFAULT_CFLAGS) -DAS_LIBRARY -DPROCESS_CC=1
 
 comskip_mod_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(sdl_CFLAGS) $(DEFINES) -DHAVE_SDL
+comskip_mod_LDADD = -lcomskip
 
 comskip_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(DEFINES)
 comskip_LDADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(PLATFORM_LIBS)
