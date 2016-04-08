@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = subdir-objects
 
-bin_PROGRAMS = comskip comskip_mod
+bin_PROGRAMS = comskip
 if BUILD_GUI
     bin_PROGRAMS += comskip-gui
 endif
@@ -13,9 +13,8 @@ base_sources = comskip.c comskip.h mpeg2dec.c platform.c platform.h video_out_dx
     ccextratorwin/general_loop.c \
     ccextratorwin/myth.c
 
-comskip_mod_SOURCES = comskip_main.c
-comskip_SOURCES = $(base_sources)
-comskip_gui_SOURCES = $(base_sources) video_out_sdl.c
+comskip_SOURCES = $(base_sources) comskip_main.c
+comskip_gui_SOURCES = $(base_sources) video_out_sdl.c comskip_main.c
 votest_SOURCES = video_out_dx.c video_out_sdl.c
 
 DEFINES = -DPROCESS_CC
@@ -36,10 +35,7 @@ libcomskip_la_SOURCES = comskip.c comskip.h mpeg2dec.c platform.c platform.h vid
     ccextratorwin/myth.c
 libcomskip_la_LDFLAGS = -module
 libcomskip_la_LIBADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(sdl_LIBS)
-libcomskip_la_CFLAGS = $(DEFAULT_CFLAGS) -DAS_LIBRARY -DPROCESS_CC=1
-
-comskip_mod_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(sdl_CFLAGS) $(DEFINES) -DHAVE_SDL
-comskip_mod_LDADD = -lcomskip
+libcomskip_la_CFLAGS = $(DEFAULT_CFLAGS) -DPROCESS_CC=1
 
 comskip_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(DEFINES)
 comskip_LDADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(PLATFORM_LIBS)
