@@ -2019,17 +2019,18 @@ void comskip_decode_init(comskip_decode_state *state, int argc, char **argv)
 	{
 	    len = strlen(ptr);
 	}
-	strncpy(HomeDir, ptr, len);
 
-	len = (size_t)max(0, strrchr(HomeDir,'\\') - HomeDir);
-	if (len==0)
+	strncpy(HomeDir, ptr, len);
+	ptr = strrchr(HomeDir,'\\');
+		
+	if (!ptr)
 	{
 	    HomeDir[0] = '.';
 	    HomeDir[1] = '\0';
 	}
 	else
 	{
-	    HomeDir[len] = '\0';
+	    HomeDir[ptr - HomeDir] = '\0';
 	}
 
 	fprintf (stderr, "%s, made using ffmpeg\n", PACKAGE_STRING);
