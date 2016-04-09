@@ -2021,16 +2021,16 @@ void comskip_decode_init(comskip_decode_state *state, int argc, char **argv)
 	}
 
 	strncpy(HomeDir, ptr, len);
+
 	ptr = strrchr(HomeDir,'\\');
-		
-	if (!ptr)
+	if (!ptr || ptr - HomeDir == 0)
 	{
 	    HomeDir[0] = '.';
 	    HomeDir[1] = '\0';
 	}
 	else
 	{
-	    HomeDir[ptr - HomeDir] = '\0';
+	    *ptr = '\0';
 	}
 
 	fprintf (stderr, "%s, made using ffmpeg\n", PACKAGE_STRING);
