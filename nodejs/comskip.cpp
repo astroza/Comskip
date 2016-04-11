@@ -1,3 +1,6 @@
+/* (C) 2016 NED
+ * Author: Felipe Astroza (fastroza@ned.cl)
+ */
 #include <node.h>
 #include <v8.h>
 #include <uv.h>
@@ -5,9 +8,9 @@
 #include <thread>
 #include <dlfcn.h>
 #include <string>
+#include <list>
 #include <queue>
 #include "../comskip.h"
-#include <unordered_map>
 
 using namespace v8;
 
@@ -19,10 +22,12 @@ typedef struct {
 typedef struct {
     uv_work_t request;
     uv_async_t commercial_notifier;
+    std::list<segment> commercials; // storage for partial results
+    uv_mutex_t updates_mutex; // protects integrity of updates queue
+    std::queue<segment> updates; 
     std::string input_file;
     Persistent<Function> complete_callback;
     Persistent<Function> commercial_callback;
-    std::queue<segment> commercials;
     comskip_decode_state state;
 } comskip_work;
 
@@ -30,6 +35,20 @@ static void (*_comskip_decode_init)(comskip_decode_state *, int, char **);
 static void (*_comskip_decode_loop)(comskip_decode_state *);
 static void (*_comskip_decode_finish)(comskip_decode_state *);
 static void (*_set_output_callback)(void (*)(double, double, comskip_work *), comskip_work *);
+
+static bool add_segment(std::list<segment> *commercials, segment latest_segment)
+{
+    for(auto i = commercials->begin(); i != commercials->end(); i++) {
+        if(i->start == latest_segment.start) {
+            if(i->end == latest_segment.end)
+                return false;
+            i->end = latest_segment.end;
+            return true;
+        }
+    }
+    commercials->push_back(latest_segment);
+    return true;
+}
 
 static void comskip_work_async(uv_work_t *req)
 {
@@ -55,6 +74,8 @@ static void comskip_work_complete(uv_work_t* req, int status)
     Local<Function>::New(isolate, work->complete_callback)->Call(isolate->GetCurrentContext()->Global(), argc, argv);
     work->complete_callback.Reset();
     work->commercial_callback.Reset();
+    uv_unref((uv_handle_t *)&work->commercial_notifier); // takes away this handle from the event loop
+    
     delete work;
 }
 
@@ -65,11 +86,17 @@ void js_commercial_cb(uv_async_t *notifier)
     comskip_work *work = (comskip_work *)notifier->data;
     v8::HandleScope handleScope(isolate);
 
-    segment sg = work->commercials.front();
-    work->commercials.pop();
-
-    Local<Value> argv[argc] = {Number::New(isolate, sg.start), Number::New(isolate, sg.end)};
-    Local<Function>::New(isolate, work->commercial_callback)->Call(isolate->GetCurrentContext()->Global(), argc, argv);
+    uv_mutex_lock(&work->updates_mutex);
+    while(!work->updates.empty()) {
+        segment sg = work->updates.front();
+        if(add_segment(&work->commercials, sg)) {
+            // It calls JS update callback only if the segment is a new one or it was updated
+            Local<Value> argv[argc] = { Number::New(isolate, sg.start), Number::New(isolate, sg.end) };
+            Local<Function>::New(isolate, work->commercial_callback)->Call(isolate->GetCurrentContext()->Global(), argc, argv);
+        }
+        work->updates.pop();
+    }
+    uv_mutex_unlock(&work->updates_mutex);
 }
 
 void comskip_update_cb(double start, double end, comskip_work *work)
@@ -77,7 +104,10 @@ void comskip_update_cb(double start, double end, comskip_work *work)
     segment sg;
     sg.start = start;
     sg.end = end;
-    work->commercials.push(sg);
+    uv_mutex_lock(&work->updates_mutex);
+    work->updates.push(sg);
+    uv_mutex_unlock(&work->updates_mutex);
+    
     uv_async_send(&work->commercial_notifier);
 }
 
@@ -92,7 +122,8 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     }
 
     comskip_work *work = new comskip_work();
-
+    uv_mutex_init(&work->updates_mutex);
+        
     v8::String::Utf8Value param0(args[0]->ToString());
 
     work->input_file = std::string(*param0); 
@@ -105,7 +136,6 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     work->commercial_callback.Reset(isolate, callback);
 
     _set_output_callback(comskip_update_cb, work);
-
     uv_async_init(uv_default_loop(), &work->commercial_notifier, js_commercial_cb);
 
     work->commercial_notifier.data = work;
