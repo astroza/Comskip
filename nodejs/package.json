@@ -1,5 +1,9 @@
 {
     "name": "comskip",
     "version": "0.0.1",
-    "main": "./build/Release/comskip"
+    "main": "./build/Release/comskip",
+    "author": { "name": "Felipe Astroza",
+                "email": "fastroza@ned.cl",
+                "url": "http://ned.cl/"
+    }
 }

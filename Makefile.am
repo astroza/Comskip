@@ -26,14 +26,14 @@ if PLATFORM_WIN32
     PLATFORM_LIBS = -lcomdlg32 -lgdi32
 endif
 
-pkglib_LTLIBRARIES = libcomskip.la
+lib_LTLIBRARIES = libcomskip.la
 libcomskip_la_SOURCES = comskip.c comskip.h mpeg2dec.c platform.c platform.h video_out_dx.c vo.h \
     ccextratorwin/608.c ccextratorwin/608.h \
     ccextratorwin/ccextractor.c ccextratorwin/ccextractor.h \
     ccextratorwin/encoding.c \
     ccextratorwin/general_loop.c \
     ccextratorwin/myth.c
-libcomskip_la_LDFLAGS = -module
+# libcomskip_la_LDFLAGS = -module
 libcomskip_la_LIBADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(sdl_LIBS)
 libcomskip_la_CFLAGS = $(DEFAULT_CFLAGS) -DPROCESS_CC=1
 

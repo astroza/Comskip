@@ -1,6 +1,10 @@
 #ifndef COMSKIP
 #define COMSKIP
 
+#ifdef __cplusplus
+extern "C"{
+#endif 
+
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 
@@ -29,6 +33,11 @@ FILE *LoadSettings(int argc, char ** argv);
 void file_open();
 void file_close();
 void set_output_callback(void (*)(double, double, void *), void *);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 #ifdef _WIN32
 #define PACKAGE_STRING " Comskip 0.81.093"

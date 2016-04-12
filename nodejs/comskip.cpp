@@ -31,11 +31,6 @@ typedef struct {
     comskip_decode_state state;
 } comskip_work;
 
-static void (*_comskip_decode_init)(comskip_decode_state *, int, char **);
-static void (*_comskip_decode_loop)(comskip_decode_state *);
-static void (*_comskip_decode_finish)(comskip_decode_state *);
-static void (*_set_output_callback)(void (*)(double, double, comskip_work *), comskip_work *);
-
 static bool add_segment(std::list<segment> *commercials, segment latest_segment)
 {
     for(auto i = commercials->begin(); i != commercials->end(); i++) {
@@ -56,9 +51,9 @@ static void comskip_work_async(uv_work_t *req)
     comskip_work *work = static_cast<comskip_work *>(req->data);
     char const* args[] = { "node-comskip", work->input_file.data(), "output"};
 
-    _comskip_decode_init(&work->state, 3, (char**)args);
-    _comskip_decode_loop(&work->state);
-    _comskip_decode_finish(&work->state);
+    comskip_decode_init(&work->state, 3, (char**)args);
+    comskip_decode_loop(&work->state);
+    comskip_decode_finish(&work->state);
 }
 
 static void comskip_work_complete(uv_work_t* req, int status)
@@ -135,7 +130,7 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     callback = Local<Function>::Cast(args[2]);
     work->commercial_callback.Reset(isolate, callback);
 
-    _set_output_callback(comskip_update_cb, work);
+    set_output_callback((void (*)(double, double, void *))comskip_update_cb, (void *)work);
     uv_async_init(uv_default_loop(), &work->commercial_notifier, js_commercial_cb);
 
     work->commercial_notifier.data = work;
@@ -148,18 +143,6 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
 
 void init(Handle<Object> exports, Handle<Object> module)
 {
-    void *comskip_handle = dlopen("../.libs/libcomskip.so", RTLD_GLOBAL | RTLD_NOW);
-
-    if (!comskip_handle) {
-        fputs("libcomskip.so not found", stderr);
-        exit(1);
-    }
-
-    _comskip_decode_init = reinterpret_cast<void (*)(comskip_decode_state *, int, char **)>(dlsym(comskip_handle, "comskip_decode_init"));
-    _comskip_decode_loop = reinterpret_cast<void (*)(comskip_decode_state *)>(dlsym(comskip_handle, "comskip_decode_loop"));
-    _comskip_decode_finish = reinterpret_cast<void (*)(comskip_decode_state *)>(dlsym(comskip_handle, "comskip_decode_finish"));
-    _set_output_callback = reinterpret_cast<void (*)(void (*)(double, double, comskip_work *), comskip_work *)>(dlsym(comskip_handle, "set_output_callback"));
-
     NODE_SET_METHOD(exports, "run", comskip_run);
 }
 
