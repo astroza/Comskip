@@ -587,6 +587,8 @@ int                 timeline_repair = 1;
 int                 edl_skip_field = 0;
 bool				output_edl = false;
 bool				output_live = false;
+void				(*output_callback)(double, double, void *) = NULL;
+void				*output_callback_data;
 bool				output_edlp = false;
 bool				output_bsplayer = false;
 bool				output_edlx = false;
@@ -15342,7 +15344,7 @@ void BuildCommListAsYouGo(void)
 
 
         // print out commercial breaks skipping those that are too small or too large
-        if (output_default || output_edl || output_live || output_dvrmstb)
+        if (output_default || output_edl || output_live || output_dvrmstb || output_callback)
         {
             if (output_default)
             {
@@ -15359,6 +15361,12 @@ void BuildCommListAsYouGo(void)
                 }
 //				fprintf(out_file, "FILE PROCESSING COMPLETE %6li FRAMES AT %4i\n-------------------\n",frame_count-1, (int)(fps*100));
             }
+			
+			if(output_callback != NULL) 
+			{
+				
+			}
+			
             if (output_edl)
             {
                 sprintf(filename, "%s.edl", outbasename);
@@ -15481,6 +15489,8 @@ void BuildCommListAsYouGo(void)
                         fprintf(live_file, "%.2f\t%.2f\t%d\n", (double) max(c_start[i] + padding - edl_offset,0) / fps , (double) max(c_end[i] - padding - edl_offset,0) / fps, edl_skip_field );
                     if (dvrmstb_file)
                         fprintf(dvrmstb_file, "  <commercial start=\"%f\" end=\"%f\" />\n", (double) (c_start[i] + padding) / fps , (double) (c_end[i] - padding) / fps);
+					if (output_callback)
+						output_callback((double) max(c_start[i] + padding - edl_offset, 0) / fps , (double) max(c_end[i] - padding - edl_offset, 0) / fps, output_callback_data);
                 }
             }
             if (out_file) fflush(out_file);
@@ -15756,4 +15766,10 @@ void close_data()
 		fclose(dump_data_file);
 		dump_data_file = 0;
 	}
+}
+
+void set_output_callback(void (*cb)(double, double, void *data), void *data)
+{
+	output_callback_data = data;
+	output_callback = cb;
 }

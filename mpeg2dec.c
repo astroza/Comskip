@@ -787,9 +787,8 @@ again:
         else
             tfps = 0;
 
-        fprintf (stderr,"\n%d frames decoded in %.2f seconds (%.2f fps)\n",
+        Debug (1, "\n%d frames decoded in %.2f seconds (%.2f fps)\n",
                  frame_counter, total_elapsed / 100.0, tfps);
-        fflush(stderr);
         return tfps;
     }
 
@@ -826,11 +825,10 @@ again:
     fps = frames * 100.0 / elapsed;
     tfps = frame_counter * 100.0 / total_elapsed;
 
-    fprintf (stderr, "%s - %d frames in %.2f sec(%.2f fps), "
+    Debug(1, "%s - %d frames in %.2f sec(%.2f fps), "
              "%.2f sec(%.2f fps), %d%%\r", cur_pos, frame_counter,
 //             total_elapsed / 100.0, tfps, elapsed / 100.0, fps, (int) (100.0 * get_frame_pts(framenum) / global_video_state->duration));
              total_elapsed / 100.0, tfps, elapsed / 100.0, fps, (int) (100.0 * (framenum)/get_fps() / global_video_state->duration));
-    fflush(stderr);
     last_count = frame_counter;
     return tfps;
 }
