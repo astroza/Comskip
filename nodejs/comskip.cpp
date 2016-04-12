@@ -10,7 +10,7 @@
 #include <string>
 #include <list>
 #include <queue>
-#include "../comskip.h"
+#include <comskip.h>
 
 using namespace v8;
 

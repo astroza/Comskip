@@ -37,6 +37,8 @@ libcomskip_la_SOURCES = comskip.c comskip.h mpeg2dec.c platform.c platform.h vid
 libcomskip_la_LIBADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(sdl_LIBS)
 libcomskip_la_CFLAGS = $(DEFAULT_CFLAGS) -DPROCESS_CC=1
 
+include_HEADERS=comskip.h
+
 comskip_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(DEFINES)
 comskip_LDADD = $(argtable2_LIBS) $(ffmpeg_LIBS) $(PLATFORM_LIBS)
 comskip_gui_CPPFLAGS = -Wall $(argtable2_CFLAGS) $(ffmpeg_CFLAGS) $(sdl_CFLAGS) $(DEFINES) -DHAVE_SDL
