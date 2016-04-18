@@ -1,9 +1,13 @@
 {
-    "name": "comskip",
-    "version": "0.0.1",
-    "main": "./build/Release/comskip",
-    "author": { "name": "Felipe Astroza",
-                "email": "fastroza@ned.cl",
-                "url": "http://ned.cl/"
-    }
+  "name": "comskip",
+  "version": "0.0.1",
+  "main": "./lib/index",
+  "author": {
+    "name": "Felipe Astroza",
+    "email": "fastroza@ned.cl",
+    "url": "http://ned.cl/"
+  },
+  "dependencies": {
+    "fs-extra": "^0.26.7"
+  }
 }

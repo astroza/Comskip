@@ -6523,7 +6523,24 @@ void OutputCommercialBlock(int i, long prev, long start, long end, bool last)
         }
     }
     CLOSEOUTFILE(live_file);
+    
+	if (output_callback && prev < start /* &&!last */ && end - start > 2)
+    {
+        if (start < 5)
+            start = 0;
+        s_start = max(start-edl_offset,0);
+        s_end = max(end - edl_offset,0);
 
+        if (demux_pid && enable_mencoder_pts)
+        {
+			output_callback(get_frame_pts(s_start) + F2T(1), get_frame_pts(s_end) + F2T(1), output_callback_data);
+        }
+        else
+        {
+            output_callback(get_frame_pts(s_start), get_frame_pts(s_end), output_callback_data);
+        }
+    }
+	
     if (ipodchap_file && prev < start /* &&!last */ && end - start > 2)
     {
 //		fprintf(ipodchap_file,"CHAPTER01=00:00:00.000\nCHAPTER01NAME=1\n");
@@ -15361,11 +15378,6 @@ void BuildCommListAsYouGo(void)
                 }
 //				fprintf(out_file, "FILE PROCESSING COMPLETE %6li FRAMES AT %4i\n-------------------\n",frame_count-1, (int)(fps*100));
             }
-			
-			if(output_callback != NULL) 
-			{
-				
-			}
 			
             if (output_edl)
             {

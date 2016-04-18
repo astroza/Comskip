@@ -24,11 +24,15 @@ typedef struct {
     uv_async_t commercial_notifier;
     std::list<segment> commercials; // storage for partial results
     uv_mutex_t updates_mutex; // protects integrity of updates queue
-    std::queue<segment> updates; 
-    std::string input_file;
+    std::queue<segment> updates;     
     Persistent<Function> complete_callback;
     Persistent<Function> commercial_callback;
     comskip_decode_state state;
+    
+    std::string input_file;
+    std::string ini_file;
+    std::string logo_file;
+    std::string output_dir;
 } comskip_work;
 
 static bool add_segment(std::list<segment> *commercials, segment latest_segment)
@@ -47,11 +51,16 @@ static bool add_segment(std::list<segment> *commercials, segment latest_segment)
 
 static void comskip_work_async(uv_work_t *req)
 {
-
     comskip_work *work = static_cast<comskip_work *>(req->data);
-    char const* args[] = { "node-comskip", work->input_file.data(), "output"};
+    char arg1[255];
+    char arg2[255];
+    char arg3[255];
+    snprintf(arg1, sizeof(arg1), "--ini=%s", work->ini_file.data());
+    snprintf(arg2, sizeof(arg2), "--logo=%s", work->logo_file.data());
+    snprintf(arg3, sizeof(arg3), "--output=%s", work->output_dir.data());
+    char const* args[] = { "node-comskip", arg1, arg2, arg3, work->input_file.data()};
 
-    comskip_decode_init(&work->state, 3, (char**)args);
+    comskip_decode_init(&work->state, 5, (char**)args);
     comskip_decode_loop(&work->state);
     comskip_decode_finish(&work->state);
 }
@@ -111,7 +120,7 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     Isolate* isolate = args.GetIsolate();
     Local<Function> callback;
 
-    if(args.Length() < 3) {
+    if(args.Length() < 6) {
     	isolate->ThrowException(Exception::TypeError(String::NewFromUtf8(isolate, "Wrong number of arguments")));
     	return;
     }
@@ -120,14 +129,20 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     uv_mutex_init(&work->updates_mutex);
         
     v8::String::Utf8Value param0(args[0]->ToString());
+    v8::String::Utf8Value param1(args[1]->ToString());
+    v8::String::Utf8Value param2(args[2]->ToString());
+    v8::String::Utf8Value param3(args[3]->ToString());
 
-    work->input_file = std::string(*param0); 
+    work->input_file = std::string(*param0);
+    work->ini_file = std::string(*param1);
+    work->logo_file = std::string(*param2);
+    work->output_dir = std::string(*param3);
     work->request.data = work;
 
-    callback = Local<Function>::Cast(args[1]);
+    callback = Local<Function>::Cast(args[4]);
     work->complete_callback.Reset(isolate, callback);
 
-    callback = Local<Function>::Cast(args[2]);
+    callback = Local<Function>::Cast(args[5]);
     work->commercial_callback.Reset(isolate, callback);
 
     set_output_callback((void (*)(double, double, void *))comskip_update_cb, (void *)work);
