@@ -15502,7 +15502,8 @@ void BuildCommListAsYouGo(void)
                     if (dvrmstb_file)
                         fprintf(dvrmstb_file, "  <commercial start=\"%f\" end=\"%f\" />\n", (double) (c_start[i] + padding) / fps , (double) (c_end[i] - padding) / fps);
 					if (output_callback)
-						output_callback((double) max(c_start[i] + padding - edl_offset, 0) / fps , (double) max(c_end[i] - padding - edl_offset, 0) / fps, output_callback_data);
+						//output_callback((double) max(c_start[i] + padding - edl_offset, 0) / fps , (double) max(c_end[i] - padding - edl_offset, 0) / fps, output_callback_data);
+                         output_callback(get_frame_pts(c_start[i]), get_frame_pts(c_end[i]), output_callback_data);
                 }
             }
             if (out_file) fflush(out_file);
