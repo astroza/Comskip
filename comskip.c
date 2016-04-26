@@ -16,6 +16,7 @@
 #include "vo.h"
 #include <argtable2.h>
 #include "comskip.h"
+#include "bmp.h"
 
 // Define detection methods
 #define BLACK_FRAME		1
@@ -8567,7 +8568,7 @@ FILE* LoadSettings(int argc, char ** argv)
     }
 
 
-    sprintf(logofilename, "%s.logo.txt", workbasename);
+    sprintf(logofilename, "%s.logo.bmp", workbasename);
     sprintf(logfilename, "%s.log", workbasename);
     sprintf(filename, "%s.txt", outbasename);
     if (strcmp(HomeDir, ".") == 0)
@@ -11684,106 +11685,81 @@ char CheckFramesForReffer(int start, int end)
 
 void SaveLogoMaskData(void)
 {
-    FILE*	logo_file;
+    FILE    *metadata_file;
+    bitmap  *bmap;
+    char 	metadatafilename[MAX_PATH];
     int		x;
     int		y;
-    logo_file = myfopen(logofilename, "w");
-    if (!logo_file)
+    
+    sprintf(metadatafilename, "%s.meta", logofilename);
+    metadata_file = myfopen(metadatafilename, "w");
+    if (!metadata_file)
     {
-        fprintf(stderr, "%s - could not create file %s\n", strerror(errno), logofilename);
-        Debug(1, "%s - could not create file %s\n", strerror(errno), logofilename);
+        fprintf(stderr, "%s - could not create file %s\n", strerror(errno), metadatafilename);
+        Debug(1, "%s - could not create file %s\n", strerror(errno), metadatafilename);
         if(startOverAfterLogoInfoAvail)
             exit(7);
     }
 
-    fprintf(logo_file, "logoMinX=%i\n", clogoMinX);
-    fprintf(logo_file, "logoMaxX=%i\n", clogoMaxX);
-    fprintf(logo_file, "logoMinY=%i\n", clogoMinY);
-    fprintf(logo_file, "logoMaxY=%i\n", clogoMaxY);
-    fprintf(logo_file, "picWidth=%i\n", width);
-    fprintf(logo_file, "picHeight=%i\n", height);
-    if (1)
-    {
-        fprintf(logo_file, "\nCombined Logo Mask\n");
-        fprintf(logo_file, "\202\n");
-        for (y = clogoMinY; y <= clogoMaxY; y++)
-        {
-            for (x = clogoMinX; x <= clogoMaxX; x++)
-            {
-                switch (choriz_edgemask[y * width + x])
-                {
-                case 0:
-                    if (cvert_edgemask[y * width + x] == 1)
-                        fprintf(logo_file, "-");
-                    else
-                        fprintf(logo_file, " ");
-                    break;
+    fprintf(metadata_file, "logoMinX=%i\n", clogoMinX);
+    fprintf(metadata_file, "logoMaxX=%i\n", clogoMaxX);
+    fprintf(metadata_file, "logoMinY=%i\n", clogoMinY);
+    fprintf(metadata_file, "logoMaxY=%i\n", clogoMaxY);
 
-                case 1:
-                    if (cvert_edgemask[y * width + x] == 1)
-                        fprintf(logo_file, "+");
-                    else
-                        fprintf(logo_file, "|");
-                    break;
-                }
-            }
+    fclose(metadata_file);
 
-            fprintf(logo_file, "\n");
-        }
-
+    bmap = bitmap_new(width, height, 24);
+    if (!bmap) {
+        fprintf(stderr, "could not create logo bitmap %s\n", strerror(errno));
+        if(startOverAfterLogoInfoAvail)
+            exit(7);
     }
-    else
-    {
-        fprintf(logo_file, "\nHorizonatal Logo Mask\n");
-        fprintf(logo_file, "\200\n");
-        for (y = clogoMinY; y <= clogoMaxY; y++)
+
+    for (y = clogoMinY; y <= clogoMaxY; y++) {
+        for (x = clogoMinX; x <= clogoMaxX; x++)
         {
-            for (x = clogoMinX; x <= clogoMaxX; x++)
+            switch (choriz_edgemask[y * width + x])
             {
-                switch (choriz_edgemask[y * width + x])
-                {
-                case 0:
-                    fprintf(logo_file, " ");
-                    break;
-
-                case 1:
-                    fprintf(logo_file, "|");
-                    break;
+            case 0:
+                if (cvert_edgemask[y * width + x] == 1) {
+                    //fprintf(logo_file, "-");
+                    bitmap_write_pixel(bmap, x, y, 0x0000ff);
                 }
-            }
-
-            fprintf(logo_file, "\n");
-        }
-
-        fprintf(logo_file, "\nVertical Logo Mask\n");
-        fprintf(logo_file, "\201\n");
-        for (y = clogoMinY; y <= clogoMaxY; y++)
-        {
-            for (x = clogoMinX; x <= clogoMaxX; x++)
-            {
-                switch (cvert_edgemask[y * width + x])
-                {
-                case 0:
-                    fprintf(logo_file, " ");
-                    break;
-
-                case 1:
-                    fprintf(logo_file, "-");
-                    break;
+                else {
+                    //fprintf(logo_file, " ");
+                    bitmap_write_pixel(bmap, x, y, 0x000000);
                 }
-            }
+                break;
 
-            fprintf(logo_file, "\n");
+            case 1:
+                if (cvert_edgemask[y * width + x] == 1) {
+                    //fprintf(logo_file, "+");
+                    bitmap_write_pixel(bmap, x, y, 0x00ffff);
+                }
+                else {
+                    // fprintf(logo_file, "|");
+                    bitmap_write_pixel(bmap, x, y, 0x00ff00);
+                }
+                break;
+            }
         }
     }
 
-    fclose(logo_file);
+    if(bitmap_save(bmap, logofilename) == -1) {
+        fprintf(stderr, "%s - could not save logo bitmap %s\n", logofilename, strerror(errno));
+        if(startOverAfterLogoInfoAvail)
+            exit(7);
+    }
+    bitmap_destroy(bmap);
+    //fclose(logo_file);
 }
 
 void LoadLogoMaskData(void)
 {
-    FILE*	logo_file = NULL;
-    FILE*	txt_file;
+    bitmap  *bmap;
+    FILE    *txt_file;
+    FILE    *metadata_file;
+    char    metadatafilename[MAX_PATH];
     int		x;
     int		y;
     double	tmp;
@@ -11793,15 +11769,14 @@ void LoadLogoMaskData(void)
     long	tmpLong = 0;
     size_t	len = 0;
 
-    logo_file = myfopen(logofilename, "r");
-    if (logo_file)
+    sprintf(metadatafilename, "%s.meta", logofilename);
+    metadata_file = myfopen(metadatafilename, "r");
+    if (metadata_file)
     {
-        Debug(1, "Using %s for logo data.\n", logofilename);
-        len = fread(data, 1, 1999, logo_file);
-        fclose(logo_file);
+        Debug(1, "Using %s for logo meta data.\n", metadatafilename);
+        len = fread(data, 1, 1999, metadata_file);
+        fclose(metadata_file);
         data[len] = '\0';
-        if ((tmp = FindNumber(data, "picWidth=", (double) width)) > -1) videowidth = width = (int)tmp;
-        if ((tmp = FindNumber(data, "picHeight=", (double) height)) > -1) height = (int)tmp;
         if ((tmp = FindNumber(data, "logoMinX=", (double) clogoMinX)) > -1) clogoMinX = (int)tmp;
         if ((tmp = FindNumber(data, "logoMaxX=", (double) clogoMaxX)) > -1) clogoMaxX = (int)tmp;
         if ((tmp = FindNumber(data, "logoMinY=", (double) clogoMinY)) > -1) clogoMinY = (int)tmp;
@@ -11809,120 +11784,47 @@ void LoadLogoMaskData(void)
     }
     else
     {
-        Debug(0, "Could not find the logo file.\n");
+        Debug(0, "Could not find the logo meta data file.\n");
         logoInfoAvailable = false;
         return;
     }
 
-    logo_file = myfopen(logofilename, "r");
-    /*
-    	choriz_edgemask = malloc(width * height * sizeof(unsigned char));
-    	if (choriz_edgemask == NULL) {
-    		Debug(0, "Could not allocate memory for horizontal edgemask\n");
-    		exit(8);
-    	}
-
-    	cvert_edgemask = malloc(width * height * sizeof(unsigned char));
-    	if (cvert_edgemask == NULL) {
-    		Debug(0, "Could not allocate memory for vertical edgemask\n");
-    		exit(9);
-    	}
-    	memset(choriz_edgemask, 0, width * height);
-    	memset(cvert_edgemask, 0, width * height);
-    */
-    do
-    {
-        temp = getc(logo_file);
+    bmap = bitmap_load(logofilename);
+    if(!bmap) {
+        fprintf(stderr, "Fatal error - file \"%s\" is missing\n", logofilename);
+        exit(-1);
     }
-    while ((temp != '\200') && !feof(logo_file));
-    for (y = clogoMinY; y <= clogoMaxY; y++)
-    {
-        for (x = clogoMinX; x <= clogoMaxX; x++)
-        {
-            temp = getc(logo_file);
-            if (temp == '\n') temp = getc(logo_file);				// If a carrage return was retrieved, get the next character
-            switch (temp)
+    for (y = clogoMinY; y <= clogoMaxY; y++) {
+        for (x = clogoMinX; x <= clogoMaxX; x++) {
+            switch (bitmap_read_pixel(bmap, x, y))
             {
-            case ' ':
+            case 0x000000:
                 choriz_edgemask[y * width + x] = 0;
-                break;
-
-            case '|':
-                choriz_edgemask[y * width + x] = 1;
-                break;
-            }
-        }
-    }
-
-    fclose(logo_file);
-    logo_file = myfopen(logofilename, "r");
-    do
-    {
-        temp = getc(logo_file);
-    }
-    while ((temp != '\201') && !feof(logo_file));
-    for (y = clogoMinY; y <= clogoMaxY; y++)
-    {
-        for (x = clogoMinX; x <= clogoMaxX; x++)
-        {
-            temp = getc(logo_file);
-            if (temp == '\n') temp = getc(logo_file);				// If a carrage return was retrieved, get the next character
-            switch (temp)
-            {
-            case ' ':
                 cvert_edgemask[y * width + x] = 0;
                 break;
 
-            case '-':
+            //case '-':
+            case 0x0000ff:
+                choriz_edgemask[y * width + x] = 0;
                 cvert_edgemask[y * width + x] = 1;
                 break;
+
+            //case '|':
+            case 0x00ff00:
+                choriz_edgemask[y * width + x] = 1;
+                cvert_edgemask[y * width + x] = 0;
+                break;
+
+            //case '+':
+            case 0x00ffff:
+                choriz_edgemask[y * width + x] = 1;
+                cvert_edgemask[y * width + x] = 1;
+                break;
+
             }
         }
     }
-    fclose(logo_file);
-
-    logo_file = myfopen(logofilename, "r");
-    do
-    {
-        temp = getc(logo_file);
-    }
-    while ((temp != '\202') && !feof(logo_file));
-    if (!feof(logo_file))
-    {
-        for (y = clogoMinY; y <= clogoMaxY; y++)
-        {
-            for (x = clogoMinX; x <= clogoMaxX; x++)
-            {
-                temp = getc(logo_file);
-                if (temp == '\n') temp = getc(logo_file);				// If a carrage return was retrieved, get the next character
-                switch (temp)
-                {
-                case ' ':
-                    choriz_edgemask[y * width + x] = 0;
-                    cvert_edgemask[y * width + x] = 0;
-                    break;
-
-                case '-':
-                    choriz_edgemask[y * width + x] = 0;
-                    cvert_edgemask[y * width + x] = 1;
-                    break;
-
-                case '|':
-                    choriz_edgemask[y * width + x] = 1;
-                    cvert_edgemask[y * width + x] = 0;
-                    break;
-
-                case '+':
-                    choriz_edgemask[y * width + x] = 1;
-                    cvert_edgemask[y * width + x] = 1;
-                    break;
-
-                }
-            }
-        }
-    }
-    fclose(logo_file);
-
+    bitmap_destroy(bmap);
 
     logoInfoAvailable = true;
     startOverAfterLogoInfoAvail = true; // prevent continuous searching for logo when a logo file is specified

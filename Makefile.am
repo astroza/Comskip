@@ -6,7 +6,7 @@ if BUILD_GUI
 endif
 check_PROGRAMS = votest
 
-base_sources = comskip.c comskip.h mpeg2dec.c platform.c platform.h video_out_dx.c vo.h \
+base_sources = comskip.c comskip.h mpeg2dec.c bmp.c bmp.h platform.c platform.h video_out_dx.c vo.h \
     ccextratorwin/608.c ccextratorwin/608.h \
     ccextratorwin/ccextractor.c ccextratorwin/ccextractor.h \
     ccextratorwin/encoding.c \
@@ -27,7 +27,7 @@ if PLATFORM_WIN32
 endif
 
 lib_LTLIBRARIES = libcomskip.la
-libcomskip_la_SOURCES = comskip.c comskip.h mpeg2dec.c platform.c platform.h video_out_dx.c vo.h \
+libcomskip_la_SOURCES = comskip.c comskip.h mpeg2dec.c bmp.c bmp.h platform.c platform.h video_out_dx.c vo.h \
     ccextratorwin/608.c ccextratorwin/608.h \
     ccextratorwin/ccextractor.c ccextratorwin/ccextractor.h \
     ccextratorwin/encoding.c \

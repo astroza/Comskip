@@ -27,7 +27,7 @@ ComskipWrapper.prototype.ini_file = function() {
 }
 
 ComskipWrapper.prototype.logo_file = function() {
-  return this.working_dir + '/' + this.profile + '/logo.txt';
+  return this.working_dir + '/' + this.profile + '/logo.bmp';
 }
 
 ComskipWrapper.prototype.output_dir = function() {
