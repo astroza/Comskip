@@ -52,7 +52,7 @@ ComskipWrapper.prototype.run = function(mpeg_file, finish_cb, update_cb)
           finish_cb(msg.finish.result);
           break;
         case 'update':
-          update_cb(msg.update.start, msg.update.end);
+          update_cb(msg.segment.start, msg.segment.end, msg.segment.completed);
           break;
       }
     });

@@ -17,12 +17,13 @@ using namespace v8;
 typedef struct {
     double start;
     double end;
+    int completed;
 } segment;
 
 typedef struct {
     uv_work_t request;
     uv_async_t commercial_notifier;
-    std::list<segment> commercials; // storage for partial results
+    std::list<segment> commercials[2]; // 0: partials, 1: completed 
     uv_mutex_t updates_mutex; // protects integrity of updates queue
     std::queue<segment> updates;     
     Persistent<Function> complete_callback;
@@ -85,7 +86,7 @@ static void comskip_work_complete(uv_work_t* req, int status)
 
 void js_commercial_cb(uv_async_t *notifier)
 {
-    const unsigned argc = 2;
+    const unsigned argc = 3;
     Isolate *isolate = Isolate::GetCurrent();
     comskip_work *work = (comskip_work *)notifier->data;
     v8::HandleScope handleScope(isolate);
@@ -93,9 +94,9 @@ void js_commercial_cb(uv_async_t *notifier)
     uv_mutex_lock(&work->updates_mutex);
     while(!work->updates.empty()) {
         segment sg = work->updates.front();
-        if(add_segment(&work->commercials, sg)) {
+        if(add_segment(&work->commercials[sg.completed], sg)) {
             // It calls JS update callback only if the segment is a new one or it was updated
-            Local<Value> argv[argc] = { Number::New(isolate, sg.start), Number::New(isolate, sg.end) };
+            Local<Value> argv[argc] = { Number::New(isolate, sg.start), Number::New(isolate, sg.end), Boolean::New(isolate, sg.completed)};
             Local<Function>::New(isolate, work->commercial_callback)->Call(isolate->GetCurrentContext()->Global(), argc, argv);
         }
         work->updates.pop();
@@ -103,11 +104,12 @@ void js_commercial_cb(uv_async_t *notifier)
     uv_mutex_unlock(&work->updates_mutex);
 }
 
-void comskip_update_cb(double start, double end, comskip_work *work)
+void comskip_update_cb(double start, double end, int completed, comskip_work *work)
 {
     segment sg;
     sg.start = start;
     sg.end = end;
+    sg.completed = completed;
     uv_mutex_lock(&work->updates_mutex);
     work->updates.push(sg);
     uv_mutex_unlock(&work->updates_mutex);
@@ -145,7 +147,7 @@ void comskip_run(const v8::FunctionCallbackInfo<v8::Value>& args)
     callback = Local<Function>::Cast(args[5]);
     work->commercial_callback.Reset(isolate, callback);
 
-    set_output_callback((void (*)(double, double, void *))comskip_update_cb, (void *)work);
+    set_output_callback((void (*)(double, double, int, void *))comskip_update_cb, (void *)work);
     uv_async_init(uv_default_loop(), &work->commercial_notifier, js_commercial_cb);
 
     work->commercial_notifier.data = work;

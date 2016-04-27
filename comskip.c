@@ -588,7 +588,7 @@ int                 timeline_repair = 1;
 int                 edl_skip_field = 0;
 bool				output_edl = false;
 bool				output_live = false;
-void				(*output_callback)(double, double, void *) = NULL;
+void				(*output_callback)(double, double, int, void *) = NULL;
 void				*output_callback_data;
 bool				output_edlp = false;
 bool				output_bsplayer = false;
@@ -2128,7 +2128,6 @@ void OutputDebugWindow(bool showVideo, int frm, int grf)
                 {
                     if (frm+1 == frame_count)
                     {
-
                         LOGO_X_LOOP
                         {
                             LOGO_Y_LOOP
@@ -6534,11 +6533,11 @@ void OutputCommercialBlock(int i, long prev, long start, long end, bool last)
 
         if (demux_pid && enable_mencoder_pts)
         {
-			output_callback(get_frame_pts(s_start) + F2T(1), get_frame_pts(s_end) + F2T(1), output_callback_data);
+			output_callback(get_frame_pts(s_start) + F2T(1), get_frame_pts(s_end) + F2T(1), 1, output_callback_data);
         }
         else
         {
-            output_callback(get_frame_pts(s_start), get_frame_pts(s_end), output_callback_data);
+            output_callback(get_frame_pts(s_start), get_frame_pts(s_end), 1, output_callback_data);
         }
     }
 	
@@ -11794,6 +11793,8 @@ void LoadLogoMaskData(void)
         fprintf(stderr, "Fatal error - file \"%s\" is missing\n", logofilename);
         exit(-1);
     }
+    width = bmap->info_header.image_width;
+    height = bmap->info_header.image_height;
     for (y = clogoMinY; y <= clogoMaxY; y++) {
         for (x = clogoMinX; x <= clogoMaxX; x++) {
             switch (bitmap_read_pixel(bmap, x, y))
@@ -15404,8 +15405,8 @@ void BuildCommListAsYouGo(void)
                     if (dvrmstb_file)
                         fprintf(dvrmstb_file, "  <commercial start=\"%f\" end=\"%f\" />\n", (double) (c_start[i] + padding) / fps , (double) (c_end[i] - padding) / fps);
 					if (output_callback)
-						//output_callback((double) max(c_start[i] + padding - edl_offset, 0) / fps , (double) max(c_end[i] - padding - edl_offset, 0) / fps, output_callback_data);
-                         output_callback(get_frame_pts(c_start[i]), get_frame_pts(c_end[i]), output_callback_data);
+						output_callback((double) max(c_start[i] + padding - edl_offset, 0) / fps , (double) max(c_end[i] - padding - edl_offset, 0) / fps, 0, output_callback_data);
+                        //output_callback(get_frame_pts(c_start[i]), get_frame_pts(c_end[i]), 0, output_callback_data);
                 }
             }
             if (out_file) fflush(out_file);
@@ -15683,7 +15684,7 @@ void close_data()
 	}
 }
 
-void set_output_callback(void (*cb)(double, double, void *data), void *data)
+void set_output_callback(void (*cb)(double, double, int, void *data), void *data)
 {
 	output_callback_data = data;
 	output_callback = cb;

@@ -32,7 +32,7 @@ void comskip_decode_finish(comskip_decode_state *state);
 FILE *LoadSettings(int argc, char ** argv);
 void file_open();
 void file_close();
-void set_output_callback(void (*)(double, double, void *), void *);
+void set_output_callback(void (*)(double, double, int, void *), void *);
 
 #ifdef __cplusplus
 }
