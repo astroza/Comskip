@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@  --with autotools-dev
+
+export DEB_CONFIGURE_EXTRA_FLAGS="--enable-static=no"

@@ -1,0 +1,11 @@
+Package: libcomskip0
+Source: libcomskip
+Version: 1.0-1
+Architecture: amd64
+Maintainer: Felipe Astroza <felipe@astroza.cl>
+Installed-Size: 984
+Depends: ffmpeg-ned, libargtable2-dev, libsdl1.2-dev
+Section: libs
+Priority: optional
+Description: Comskip free commercial detector
+ A ffmpeg based commercial detector

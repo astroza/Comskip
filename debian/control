@@ -1,0 +1,22 @@
+Source: libcomskip
+Priority: optional
+Maintainer: Felipe Astroza <felipe@astroza.cl>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev
+Standards-Version: 3.9.4
+Section: libs
+#Vcs-Git: git://git.debian.org/collab-maint/comskip.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/comskip.git;a=summary
+
+Package: libcomskip-dev
+Section: libdevel
+Architecture: any
+Depends: libcomskip0 (= ${binary:Version})
+Description: Comskip free commercial detector headers
+ Development headers for integrate Comskip in your own project
+
+Package: libcomskip0
+Section: libs
+Architecture: any
+Depends: ffmpeg-ned, libargtable2-dev, libsdl1.2-dev
+Description: Comskip free commercial detector
+ A ffmpeg based commercial detector

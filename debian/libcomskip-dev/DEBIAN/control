@@ -1,0 +1,11 @@
+Package: libcomskip-dev
+Source: libcomskip
+Version: 1.0-1
+Architecture: amd64
+Maintainer: Felipe Astroza <felipe@astroza.cl>
+Installed-Size: 33
+Depends: libcomskip0 (= 1.0-1)
+Section: libdevel
+Priority: optional
+Description: Comskip free commercial detector headers
+ Development headers for integrate Comskip in your own project
