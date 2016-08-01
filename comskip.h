@@ -28,6 +28,7 @@ typedef struct
 
 void comskip_decode_init(comskip_decode_state *, int, char **);
 void comskip_decode_loop(comskip_decode_state *state);
+void comskip_decode_loop_stop();
 void comskip_decode_finish(comskip_decode_state *state);
 FILE *LoadSettings(int argc, char ** argv);
 void file_open();

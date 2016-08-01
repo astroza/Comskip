@@ -2057,6 +2057,10 @@ void comskip_decode_init(comskip_decode_state *state, int argc, char **argv)
 	state->packet = &(is->audio_pkt);
 }
 
+void comskip_decode_loop_stop() {
+    is->quit = 1;
+}
+
 void comskip_decode_loop(comskip_decode_state *state)
 {
 	int ret;
@@ -2166,7 +2170,7 @@ again:
 	                Debug( 1,"\nRetry=%d at frame=%d, time=%8.2f seconds\n", retries, framenum, state->retry_target);
 	                Debug( 9,"Retry target pos=%" PRId64 ", pts=%" PRId64 "\n", state->last_packet_pos, state->last_packet_pts);
 
-	                if (selftest == 0) Sleep(4000L);
+	                if (selftest == 0) Sleep(1000L);
 	                file_open();
 	                Set_seek(is, state->retry_target);
 
