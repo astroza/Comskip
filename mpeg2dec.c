@@ -358,7 +358,7 @@ int frames_without_sound = 0;
 #define MAX_FRAMES_WITHOUT_SOUND	100
 int frames_with_loud_sound = 0;
 
-
+static int quit_decode_loop = 0;
 
 int retreive_frame_volume(double from_pts, double to_pts)
 {
@@ -1036,7 +1036,7 @@ void DecodeOnePicture(FILE * f, double pts)
 
     for(;;)
     {
-        if(is->quit)
+        if(quit_decode_loop)
         {
             break;
         }
@@ -2058,7 +2058,7 @@ void comskip_decode_init(comskip_decode_state *state, int argc, char **argv)
 }
 
 void comskip_decode_loop_stop() {
-    is->quit = 1;
+    quit_decode_loop = 1;
 }
 
 void comskip_decode_loop(comskip_decode_state *state)
@@ -2067,7 +2067,7 @@ void comskip_decode_loop(comskip_decode_state *state)
 again:
 	for(;;)
 	{
-	    if(is->quit)
+	    if(quit_decode_loop)
 	    {
 	        break;
 	    }
@@ -2234,6 +2234,7 @@ void comskip_decode_finish(comskip_decode_state *state)
 {
 	int tfps;
 	
+    puts("comskip_decode_finish");
     if (selftest == 1 && pass == 1 /*&& framenum > 501 && is->video_clock > 0 */)
     {
         if (is->video_clock < selftest_target - 0.08 || is->video_clock > selftest_target + 0.08)
